@@ -4,6 +4,14 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from keras import backend as K
 
+# Function to add sentence beginner
+def add_sent_beginner(tagged_sents):
+	ts = []
+	for s in tagged_sents:
+		s.insert(0, ("^", "^"))
+		ts.append(s)
+	return ts
+
 # Function to separate words and tags from tagged data
 def separate_words_tags(tagged_sents):
 	sent_words, sent_tags = [], []
@@ -17,6 +25,18 @@ def separate_words_tags(tagged_sents):
 def split_data(sent_words, sent_tags, test_size=0.2):
 	train_sents, test_sents, train_tags, test_tags = train_test_split(sent_words, sent_tags, test_size=test_size)
 	return train_sents, test_sents, train_tags, test_tags
+
+# Function to split data kfolds
+def kfold_data(sent_words, sent_tags, k=5):
+	sent_words_folds = []
+	set_tags_folds = []
+	split = int(len(sent_words)/k)
+	for i in range(k-1):
+		sent_words_folds.append(sent_words[split*i:split*(i+1)])
+		sent_tags_folds.append(sent_tags[split*i:split*(i+1)])
+	sent_words_folds.append(sent_words[split*(k-1):])
+	sent_tags_folds.append(sent_tags[split*(k-1):])
+	return sent_words_folds, sent_tags_folds
 
 # Function to generate word labels and tag labels
 def label_data(sent_words, sent_tags):
@@ -84,7 +104,15 @@ def one_hot_to_tags(sequences, label2tag):
 			sent_tag.append(label2tag[label])
 		sent_tags.append(sent_tag)
 	return sent_tags
- 
+
+# Function to convert tags from labels to tags
+def label_to_tag(sequences, label2tag):
+	tags = []
+	for seq in sequences:
+		for s in seq:
+			tags.append(label2tag[s])
+	return tags
+
 def ignore_class_accuracy(to_ignore=0):
     def ignore_accuracy(y_true, y_pred):
         y_true_class = K.argmax(y_true, axis=-1)
