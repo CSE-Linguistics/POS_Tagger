@@ -89,15 +89,20 @@ class MultiClassSVM:
 
         return max_col, accuracy, loss, loss_array
     
-    def fit(self, X: np.array, Y: np.array, lr :float = 0.01, epochs: int = 1000):
+    def fit(self, X: np.array, Y: np.array, X_test:np.array, Y_test:np.array, lr :float = 0.01, epochs: int = 1000):
         num_data = X.shape[0]
         num_classes = self.W.shape[1]
         raw_score = X @ self.W + self.B
+        train_losses = []
+        test_losses = []
 
 
         #-----------Gradient Descent-----------------------
         for i in range(epochs):
-            Y_pred, acc, loss, loss_arr = evaluate(X, Y)
+            Y_pred, acc, train_loss, loss_arr = evaluate(X, Y)
+            Y_pred_test, acc_test, test_loss, _ = evaluate(X_test, Y_test)
+            train_losses.append(train_loss)
+            test_losses.append(test_loss)
 
             #--------------For W--------------------------
             num_xi = np.sum(loss_arr > 0, axis = 1)
@@ -116,19 +121,6 @@ class MultiClassSVM:
             #-------------LR Step------------------------------
             self.W -= lr*dW
             self.B -= lr*dB
-
-
-
-
+            #------------Print Loss-----------------------------
         
-
-
-
-
-
-
-
-
-
-
-        
+        return train_losses, test_losses, self.W, self.B
