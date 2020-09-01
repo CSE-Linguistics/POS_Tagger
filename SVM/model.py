@@ -84,15 +84,40 @@ class MultiClassSVM:
         loss = raw_score - correct_answer_score[:, np.newaxis] + self.d
         loss[loss< 0 ] = 0 
         loss[np.arange(num_data), Y] = 0
-        loss = np.sum(loss)/num_data
+        loss_array = np.copy(loss)
+        loss = np.sum(loss)/num_data + self.reg*np.linalg.norm(self.W)**2
 
-        return max_col, accuracy, loss
+        return max_col, accuracy, loss, loss_array
     
-    def fit(self, X: np.array, Y: np.array, epochs: int = 1000):
+    def fit(self, X: np.array, Y: np.array, lr :float = 0.01, epochs: int = 1000):
         num_data = X.shape[0]
         num_classes = W.shape[1]
         raw_score = X @ self.W + self.B
-        Y_pred, acc, loss = evaluate(X, Y)
+
+
+        #-----------Gradient Descent-----------------------
+        for i in range(epochs):
+            Y_pred, acc, loss, loss_arr = evaluate(X, Y)
+
+            #--------------For W--------------------------
+            num_xi = np.sum(loss_arr > 0, axis = 1)
+            loss_arr[loss_arr > 0] =1 
+            val_xi = num_xi[:,np.newaxis] * X
+            zeros_arr = np.zeros((num_data,num_classes))
+            zeros_arr[np.arange(num_data),Y] = 1
+            dW = - val_xi.T @ zeros_arr
+            dW += X.T @ loss_arr
+            dW/= num_data
+            dW += 2*self.reg*W
+            #------------For B---------------------------------
+            dB = np.sum(loss_arr,axis = 1)
+            num_bins = np.bincount(num_xi)
+            dB [:,num_bins.shape[0]] = num_bins
+            #-------------LR Step------------------------------
+            W -= lr*dW
+            B -= lr*dB
+
+
 
 
         
