@@ -75,7 +75,7 @@ class MultiClassSVM:
 
     def evaluate (self, X: np.array, Y: np.array):
         num_data = X.shape[0]
-        num_classes = W.shape[1]
+        num_classes = self.W.shape[1]
         raw_score = X@self.W + self.B
         correct_answer_score = np.copy(raw_score[np.arange(num_data), Y])
         max_col = np.argmax(raw_score, axis = 1)
@@ -91,7 +91,7 @@ class MultiClassSVM:
     
     def fit(self, X: np.array, Y: np.array, lr :float = 0.01, epochs: int = 1000):
         num_data = X.shape[0]
-        num_classes = W.shape[1]
+        num_classes = self.W.shape[1]
         raw_score = X @ self.W + self.B
 
 
@@ -108,14 +108,14 @@ class MultiClassSVM:
             dW = - val_xi.T @ zeros_arr
             dW += X.T @ loss_arr
             dW/= num_data
-            dW += 2*self.reg*W
+            dW += 2*self.reg*self.W
             #------------For B---------------------------------
             dB = np.sum(loss_arr,axis = 1)
             num_bins = np.bincount(num_xi)
             dB [:,num_bins.shape[0]] = num_bins
             #-------------LR Step------------------------------
-            W -= lr*dW
-            B -= lr*dB
+            self.W -= lr*dW
+            self.B -= lr*dB
 
 
 
