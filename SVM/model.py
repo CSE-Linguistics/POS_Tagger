@@ -57,3 +57,53 @@ class SupportVectorMachine:
         
         pass
         
+class MultiClassSVM:
+    def __init__(self, num_classes:int, num_features:int, reg:float, delta: float = 1.0):
+        self.W = np.random.normal(0 ,1, (num_features, num_classes))
+        self.B = np.random.normal(0,1,(1,num_features))
+        self.reg = reg
+        self.d = delta
+
+    
+    def predict(self, X:np.array):
+        raw_score = X@self.W + self.B
+        max_col = np.argmax(raw_score, axis = 1)
+        final_score = np.zeros((raw_score.shape[0],W.shape[1]))
+
+
+        return max_col
+
+    def evaluate (self, X: np.array, Y: np.array):
+        num_data = X.shape[0]
+        num_classes = W.shape[1]
+        raw_score = X@self.W + self.B
+        correct_answer_score = np.copy(raw_score[np.arange(num_data), Y])
+        max_col = np.argmax(raw_score, axis = 1)
+        accuracy = np.sum((max_col == Y))/num_data
+
+        loss = raw_score - correct_answer_score[:, np.newaxis] + self.d
+        loss[loss< 0 ] = 0 
+        loss[np.arange(num_data), Y] = 0
+        loss = np.sum(loss)/num_data
+
+        return max_col, accuracy, loss
+    
+    def fit(self, X: np.array, Y: np.array, epochs: int = 1000):
+        num_data = X.shape[0]
+        num_classes = W.shape[1]
+        raw_score = X @ self.W + self.B
+        Y_pred, acc, loss = evaluate(X, Y)
+
+
+        
+
+
+
+
+
+
+
+
+
+
+        
