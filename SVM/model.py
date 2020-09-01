@@ -117,7 +117,9 @@ class MultiClassSVM:
             #------------For B---------------------------------
             dB = np.sum(loss_arr,axis = 1)
             num_bins = np.bincount(num_xi)
-            dB [:,num_bins.shape[0]] = num_bins
+            dB [:num_bins.shape[0]] = num_bins
+            dB/= num_data
+            dB = dB[:,np.newaxis]
             #-------------LR Step------------------------------
             self.W -= lr*dW
             self.B -= lr*dB
