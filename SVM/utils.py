@@ -92,7 +92,7 @@ def check_if_suffix(words, condition):
 	for i in words:
 		val = 0
 		for j in condition:
-			if i.endswith(j):
+			if i.lower().endswith(j):
 				val = 1
 				break
 		li.append(val)
@@ -102,7 +102,7 @@ def check_if_prefix(words, conditions):
 	for i in words:
 		val = 0
 		for j in conditions:
-			if i.endswith(j):
+			if i.lower().startswith(j):
 				val = 1
 				break
 		li.append(val)
@@ -113,11 +113,21 @@ def check_if_substr(words, conditions):
 	for i in words:
 		val = 0
 		for j in conditions:
-			if i.find(j) != -1:
+			if i.lower().find(j) != -1:
 				val = 1
 				break
 		li.append(val)
 	return li
+
+def check_if_capital_letter(words):
+	li =[]
+	for word in words:
+		val = 0
+		if any(x.isupper() for x in word): 
+			val = 1
+		li.append(val)
+	return li
+
 
 def genFeatures(words):
 	SUFFIX_NOUN = ["eer", "er", "ion", "ity", "ment", "ness", "or", "sion", "ship", "th"]
@@ -142,6 +152,9 @@ def genFeatures(words):
 	pref_adj_feature = check_if_prefix(words, PREFIX_ADJECTIVE)
 	is_alpha_feature = [word.isalpha() for word in words]
 	is_alpha_feature = list(map(int,is_alpha_feature))
+	has_capital_feature = check_if_capital_letter(words)
+	NUM_FEATURES = 10
+	NUM_WORDS = 5
 	## For word 1
 	def extract_features(index):
 		feat = []
@@ -154,26 +167,29 @@ def genFeatures(words):
 		feat.append(pref_adj_feature[index])
 		feat.append(pref_verb_feature[index])
 		feat.append(is_alpha_feature[index])
+		feat.append(has_capital_feature[index])
 		feat = np.asarray(feat)
 		return feat
-	features = np.zeros((len(words),45))
+	features = np.zeros((len(words),NUM_FEATURES*NUM_WORDS))
 		
 	for i in range(len(words)):
 		indices = [i-2,i-1,i,i+1,i+2]
 		for j in range(len(indices)):
 			if(indices[j]>= 0 and indices[j] < len(words)):
 				extracted_features = extract_features(i-2)
-				if(extracted_features.shape[0] <9): print("HIGE ERROR!")
-				features[i,j*9:(j+1)*9] = extracted_features
+				if(extracted_features.shape[0] <NUM_FEATURES): print("HUGE ERROR!")
+				features[i,j*NUM_FEATURES:(j+1)*NUM_FEATURES] = extracted_features
 	
 	return features
 		
 	#Once Done with Feature Set 1, move on to Feature Set 2
 
 if __name__ == "__main__":
-
-	words = nltk.corpus.brown.words()
-	features = genFeatures(words)
+	words_tags = nltk.corpus.brown.tagged_words(tagset='universal')
+	words = [word_tag[0] for word_tag in words_tags]
+	tags_for_words = [word_tag[1] for word_tag in words_tags]
+	for tag in tags_for_words:
+		print(tag)
 	# unique_words = np.unique(words)
 	# sub_words = generate_sub_words(unique_words)
 	# print(sub_words)
