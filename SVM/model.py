@@ -58,15 +58,14 @@ class SupportVectorMachine:
         pass
         
 class MultiClassSVM:
-    def __init__(self, num_classes:int, num_features:int, reg:float, delta: float = 1.0):
+    def __init__(self, num_classes:int, num_features:int, reg:float = 1e-4, delta: float = 1.0):
         self.W = np.random.normal(0 ,1, (num_features, num_classes))
-        self.B = np.random.normal(0,1,(1,num_features))
         self.reg = reg
         self.d = delta
 
     
     def predict(self, X:np.array):
-        raw_score = X@self.W + self.B
+        raw_score = X@self.W
         max_col = np.argmax(raw_score, axis = 1)
         final_score = np.zeros((raw_score.shape[0],W.shape[1]))
 
@@ -76,7 +75,7 @@ class MultiClassSVM:
     def evaluate (self, X: np.array, Y: np.array):
         num_data = X.shape[0]
         num_classes = self.W.shape[1]
-        raw_score = X@self.W + self.B
+        raw_score = X@self.W
         correct_answer_score = np.copy(raw_score[np.arange(num_data), Y])
         max_col = np.argmax(raw_score, axis = 1)
         accuracy = np.sum((max_col == Y))/num_data
@@ -89,40 +88,43 @@ class MultiClassSVM:
 
         return max_col, accuracy, loss, loss_array
     
-    def fit(self, X: np.array, Y: np.array, X_test:np.array, Y_test:np.array, lr :float = 0.01, epochs: int = 1000):
+    def fit(self, X: np.array, Y: np.array, X_test:np.array, Y_test:np.array, lr :float = 0.001, epochs: int = 1000, batch_size: int  = 1024):
         num_data = X.shape[0]
         num_classes = self.W.shape[1]
-        raw_score = X @ self.W + self.B
         train_losses = []
         test_losses = []
 
 
         #-----------Gradient Descent-----------------------
         for i in range(epochs):
-            Y_pred, acc, train_loss, loss_arr = evaluate(X, Y)
-            Y_pred_test, acc_test, test_loss, _ = evaluate(X_test, Y_test)
-            train_losses.append(train_loss)
-            test_losses.append(test_loss)
+            train_loss = 0
+            count = 0
+            for j in range(0,num_data, batch_size):
+                count+= 1
+                X_train_svm = X[j:min(j+32,num_data)]
+                Y_train_svm = Y[j:min(j+32, num_data)]
+                num_samples = X_train_svm.shape[0]
+                Y_pred_train, acc, train_loss_step, loss_arr =  self.evaluate(X_train_svm, Y_train_svm)
+                train_loss += train_loss_step
+                #--------------For W--------------------------
+                num_xi = np.sum(loss_arr > 0, axis = 1)
+                loss_arr[loss_arr > 0] =1 
+                val_xi = num_xi[:,np.newaxis] * X_train_svm
+                zeros_arr = np.zeros((num_samples,num_classes))
+                zeros_arr[np.arange(num_samples),Y_train_svm] = 1
+                dW = - val_xi.T @ zeros_arr
+                dW += X_train_svm.T @ loss_arr
+                dW/= num_samples
+                dW += 2*self.reg*self.W
+                #-------------LR Step------------------------------
+                self.W -= lr*dW
+                #------------Print Loss-----------------------------
 
-            #--------------For W--------------------------
-            num_xi = np.sum(loss_arr > 0, axis = 1)
-            loss_arr[loss_arr > 0] =1 
-            val_xi = num_xi[:,np.newaxis] * X
-            zeros_arr = np.zeros((num_data,num_classes))
-            zeros_arr[np.arange(num_data),Y] = 1
-            dW = - val_xi.T @ zeros_arr
-            dW += X.T @ loss_arr
-            dW/= num_data
-            dW += 2*self.reg*self.W
-            #------------For B---------------------------------
-            dB = np.sum(loss_arr,axis = 1)
-            num_bins = np.bincount(num_xi)
-            dB [:num_bins.shape[0]] = num_bins
-            dB/= num_data
-            dB = dB[:,np.newaxis]
-            #-------------LR Step------------------------------
-            self.W -= lr*dW
-            self.B -= lr*dB
-            #------------Print Loss-----------------------------
-        
-        return train_losses, test_losses, self.W, self.B
+            Y_pred_test, acc_test, test_loss, _ = self.evaluate(X_test, Y_test)
+            test_losses.append(test_loss)
+            train_losses.append(train_loss/count)
+            print(f"Epoch {i}: Train loss = {train_loss} , Test loss = {test_loss}, Test accuracy = {acc_test}")
+
+
+        return train_losses, test_losses, self.W
+    
