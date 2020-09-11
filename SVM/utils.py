@@ -1,6 +1,8 @@
 import numpy as np
 from collections import defaultdict
 import re, nltk
+from gensim.test.utils import common_texts, get_tmpfile
+from gensim.models import Word2Vec
 
 def k_fold_data(k : int, X: np.array):
 	start_index = 0
@@ -128,6 +130,11 @@ def check_if_capital_letter(words):
 		li.append(val)
 	return li
 
+def word2vectrain(words):
+	model = Word2Vec(words, size = 100, window = 5, min_count = 1, workers = 4)
+	model.save("word2vec.model")
+
+
 
 def genFeatures(words):
 	SUFFIX_NOUN = ["eer", "er", "ion", "ity", "ment", "ness", "or", "sion", "ship", "th"]
@@ -153,8 +160,9 @@ def genFeatures(words):
 	is_alpha_feature = [word.isalpha() for word in words]
 	is_alpha_feature = list(map(int,is_alpha_feature))
 	has_capital_feature = check_if_capital_letter(words)
-	NUM_FEATURES = 10
+	NUM_FEATURES = 110
 	NUM_WORDS = 5
+	model = Word2Vec.load("word2vec.model")
 	## For word 1
 	def extract_features(index):
 		feat = []
@@ -169,9 +177,10 @@ def genFeatures(words):
 		feat.append(is_alpha_feature[index])
 		feat.append(has_capital_feature[index])
 		feat = np.asarray(feat)
+		feat = np.concatenate((feat, model.wv[words[index]]))
 		return feat
 	features = np.zeros((len(words),NUM_FEATURES*NUM_WORDS))
-		
+	features[:,0] = 1
 	for i in range(len(words)):
 		indices = [i-2,i-1,i,i+1,i+2]
 		for j in range(len(indices)):
@@ -179,7 +188,6 @@ def genFeatures(words):
 				extracted_features = extract_features(i-2)
 				if(extracted_features.shape[0] <NUM_FEATURES): print("HUGE ERROR!")
 				features[i,j*NUM_FEATURES:(j+1)*NUM_FEATURES] = extracted_features
-	
 	return features
 		
 	#Once Done with Feature Set 1, move on to Feature Set 2
@@ -188,8 +196,7 @@ if __name__ == "__main__":
 	words_tags = nltk.corpus.brown.tagged_words(tagset='universal')
 	words = [word_tag[0] for word_tag in words_tags]
 	tags_for_words = [word_tag[1] for word_tag in words_tags]
-	for tag in tags_for_words:
-		print(tag)
+	word2vectrain([words])
 	# unique_words = np.unique(words)
 	# sub_words = generate_sub_words(unique_words)
 	# print(sub_words)

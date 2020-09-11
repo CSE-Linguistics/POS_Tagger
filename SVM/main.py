@@ -11,11 +11,10 @@ if __name__ == "__main__":
     numbering = {word_tag[1]:word_tag[0] for word_tag in enumerate(tagset)}
     numbered_tags = [numbering[tag] for tag in tags_for_words]
     numbered_tags = np.asarray(numbered_tags)
-    ones = np.ones(len(words))
-    ones = ones[:, np.newaxis]
     features = utils.genFeatures(words)
-    features = np.hstack((ones, features))
+
     data_list = utils.k_fold_data(5, features)
+    print("data_list made")
     result_list = utils.k_fold_data(5, numbered_tags)
     svm_model = model.MultiClassSVM(len(tagset), data_list[0].shape[1])
     train_losses = []
@@ -28,9 +27,10 @@ if __name__ == "__main__":
         Y_train = result_list[:i] + result_list[i+1:]
         Y_test = result_list[i]
         Y_train = np.concatenate(Y_train)
+        print(f"Feature Space made step{i}")
 
         #Step 2, make the SVM model
-        train_loss, test_loss, W = svm_model.fit(X_train, Y_train, X_test, Y_test,lr = 0.01, epochs= 10000)
+        train_loss, test_loss, W = svm_model.fit(X_train, Y_train, X_test, Y_test,lr = 5e-3, epochs= 100000,batch_size= 128)
         train_losses += train_loss
         test_losses += test_loss
     plt.plot(train_losses)
@@ -38,5 +38,5 @@ if __name__ == "__main__":
 
     plt.show()
     
-    np.save("W.npz",W)
+    np.save("W",W)
 
