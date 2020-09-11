@@ -107,7 +107,7 @@ class MultiClassSVM:
                 
                 #-------------LR Step------------------------------
                 tl, dW = self.svm_vec(X,Y)
-                W -= lr*dW
+                self.W -= lr*dW
                 train_loss += tl
 
                 #------------Print Loss-----------------------------
