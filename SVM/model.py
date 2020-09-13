@@ -107,12 +107,11 @@ class MultiClassSVM:
                 #-------------LR Step------------------------------
                 tl, dW = self.svm_vec(X,Y)
                 self.W -= lr*dW
-                train_loss += tl
 
                 #------------Print Loss-----------------------------
 
             if verbose == True:
-                print(f"Epoch {i}: Train loss = {train_loss} , Train accuracy = {acc_train}")
+                print(f"Epoch {i}: Train loss = {train_loss} , Train accuracy = {acc_train}")         
         Y_pred_train, acc_train, train_loss,la = self.evaluate(X, Y)
         train_losses.append(train_loss)
         print(f"Epoch {epochs}: Train loss = {train_loss} , Train accuracy = {acc_train}")

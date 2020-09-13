@@ -136,6 +136,8 @@ def unigram_generator(tagged_sentences):
 	for sentence in tagged_sentences:
 		for i in range(1,len(sentence)):
 			key = sentence[i][0]
+			if key.isnumeric():
+				key = "1"
 			if key not in unigram:
 				unigram[key] = np.zeros(12)
 			unigram[key][indices[sentence[i][1]]] += 1
@@ -152,7 +154,10 @@ def bigram_generator(tagged_sentences):
 	indices = {k:v for v,k in enumerate(univ_tag_set)}
 	for sentence in tagged_sentences:
 		for i in range(1,len(sentence)):
-			conc_tuple = (sentence[i-1][1], sentence[i][0])
+			word = sentence[i][0]
+			if word.isnumeric():
+				word = "1"
+			conc_tuple = (sentence[i-1][1],word)
 			if conc_tuple not in bigram:
 				bigram[conc_tuple] = np.zeros(12)
 			bigram[conc_tuple][indices[sentence[i][1]]] += 1
@@ -169,6 +174,9 @@ def trigram_generator(tagged_sentences):
 	indices = {k:v for v,k in enumerate(univ_tag_set)}
 	for sentence in tagged_sentences:
 		for i in range(2,len(sentence)):
+			word = sentence[i][0]
+			if word.isnumeric():
+				word = "1"
 			conc_tuple = (sentence[i-2][1], sentence[i-1][1], sentence[i][0])
 			if conc_tuple not in trigram:
 				trigram[conc_tuple] = np.zeros(12)
@@ -181,29 +189,66 @@ def trigram_generator(tagged_sentences):
 	return trigram
 
 def word_feature(word, trigram, bigram, unigram, previous_word_tag = None, prev_2_word_tag = None):
-	vec = np.ones(12)
+	if word.isnumeric():
+		word = "1"
+	vec = np.ones(22)
 	vec/=12
 	if previous_word_tag is None:
 		if word not in unigram:
-			return vec
+			pass
 		else:
-			return unigram[word]
+			vec[:12] = unigram[word]
 	if prev_2_word_tag is None:
 		if (previous_word_tag, word) not in bigram:
 			if word not in unigram:
-				return vec
-			else: return unigram[word]
+				pass
+			else:
+				vec[:12] = unigram[word]
 		else: 
-			return bigram[(previous_word_tag, word)]
+			vec[:12] = bigram[(previous_word_tag, word)]
 
 	if (prev_2_word_tag, previous_word_tag, word) not in trigram:
 		if (previous_word_tag, word) not in bigram:
 			if word not in unigram:
-				return vec
-			else: return unigram[word]
+				pass
+			else:
+				vec[:12] = unigram[word]
 		else: 
-			return bigram[(previous_word_tag, word)]
-	return trigram[(prev_2_word_tag, previous_word_tag, word)]
+			vec[:12] = bigram[(previous_word_tag, word)]
+	else:
+		vec[:12] = trigram[(prev_2_word_tag, previous_word_tag, word)]
+	other_vec = np.zeros(10)
+	SUFFIX_NOUN = ["eer", "er", "ion", "ity", "ment", "ness", "or", "sion", "ship", "th"]
+	SUFFIX_ADJECTIVE = ["able", "ible", "al", "ant", "ary", "ful", "ic", "ious", "ous", "ive", "less", "y"]
+	SUFFIX_VERB = ["ed", "en", "er", "ing", "ize", "ise"]
+	SUFFIX_ADVERB = ["ly", "ward", "wise"]
+	HYPHEN = ["-"]
+	PREFIX_NOUN = ["non", "pre"]
+	PREFIX_VERB = ["dis", "mis", "ob", "op", "pre", "un", "re"]
+	PREFIX_ADJECTIVE = ["anti", "en", "il", "im", "in", "ir", "non", "pre", "un"]
+
+	#Feature Set 1 -> Word-2, Word-1, Word, Word+1, Word+2 's features
+
+	other_vec[0] = check_if_suffix([word], SUFFIX_NOUN)[0]
+	other_vec[1] = check_if_suffix([word], SUFFIX_VERB)[0]
+	other_vec[2] = check_if_suffix([word], SUFFIX_ADJECTIVE)[0]
+	other_vec[3] = check_if_suffix([word], SUFFIX_ADVERB)[0]
+
+	other_vec[4] = check_if_substr([word], HYPHEN)[0]
+	
+	other_vec[5] = check_if_prefix([word], PREFIX_NOUN)[0]
+	other_vec[6] = check_if_prefix([word], PREFIX_VERB)[0]
+	other_vec[7] = check_if_prefix([word], PREFIX_ADJECTIVE)[0]
+	is_alpha_feature = word.isalpha()
+	if is_alpha_feature is False: is_alpha_feature = 0
+	else: is_alpha_feature = 1
+	other_vec[8] = is_alpha_feature
+	other_vec[9] = check_if_capital_letter([word])[0]
+
+	vec[12:] = other_vec
+
+	return vec
+	
 
 
 def trainFeatures(sentences):
@@ -278,7 +323,7 @@ def genFeatures(words):
 				if(extracted_features.shape[0] <NUM_FEATURES): print("HUGE ERROR!")
 				features[i,j*NUM_FEATURES:(j+1)*NUM_FEATURES] = extracted_features
 	return features
-		
+
 	#Once Done with Feature Set 1, move on to Feature Set 2
 
 if __name__ == "__main__":
