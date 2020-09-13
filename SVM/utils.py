@@ -1,18 +1,18 @@
 import numpy as np
 from collections import defaultdict
 import re, nltk
-from gensim.test.utils import common_texts, get_tmpfile
-from gensim.models import Word2Vec
 
 def k_fold_data(k : int, X: np.array):
 	start_index = 0
-	end_index = k
+	end_index = int(np.floor(len(X)/ k))
+	incrementor = int(np.floor(len(X)/ k))
 	k_folds = []
 
-	for i in range(k):
+	for i in range(k-1):
 		k_folds.append(X[start_index:end_index])
 		start_index = end_index
-		end_index += k
+		end_index += incrementor
+	k_folds.append(X[start_index:])
 	
 	return k_folds
 
@@ -129,10 +129,101 @@ def check_if_capital_letter(words):
 			val = 1
 		li.append(val)
 	return li
+def unigram_generator(tagged_sentences):
+	unigram = {}
+	univ_tag_set = ['DET', 'NOUN', 'ADJ', 'VERB', 'ADP', '.', 'ADV', 'CONJ', 'PRT', 'PRON', 'NUM', 'X']
+	indices = {k:v for v,k in enumerate(univ_tag_set)}
+	for sentence in tagged_sentences:
+		for i in range(1,len(sentence)):
+			key = sentence[i][0]
+			if key not in unigram:
+				unigram[key] = np.zeros(12)
+			unigram[key][indices[sentence[i][1]]] += 1
 
-def word2vectrain(words):
-	model = Word2Vec(words, size = 100, window = 5, min_count = 1, workers = 4)
-	model.save("word2vec.model")
+	for key in unigram:
+		arr = unigram[key]
+		arr/= np.sum(arr)
+		unigram[key] = arr
+	return unigram
+
+def bigram_generator(tagged_sentences):
+	bigram = {}
+	univ_tag_set = ['DET', 'NOUN', 'ADJ', 'VERB', 'ADP', '.', 'ADV', 'CONJ', 'PRT', 'PRON', 'NUM', 'X']
+	indices = {k:v for v,k in enumerate(univ_tag_set)}
+	for sentence in tagged_sentences:
+		for i in range(1,len(sentence)):
+			conc_tuple = (sentence[i-1][1], sentence[i][0])
+			if conc_tuple not in bigram:
+				bigram[conc_tuple] = np.zeros(12)
+			bigram[conc_tuple][indices[sentence[i][1]]] += 1
+
+	for key in bigram:
+		arr = bigram[key]
+		arr/= np.sum(arr)
+		bigram[key] = arr
+	return bigram
+
+def trigram_generator(tagged_sentences):
+	trigram = {}
+	univ_tag_set = ['DET', 'NOUN', 'ADJ', 'VERB', 'ADP', '.', 'ADV', 'CONJ', 'PRT', 'PRON', 'NUM', 'X']
+	indices = {k:v for v,k in enumerate(univ_tag_set)}
+	for sentence in tagged_sentences:
+		for i in range(2,len(sentence)):
+			conc_tuple = (sentence[i-2][1], sentence[i-1][1], sentence[i][0])
+			if conc_tuple not in trigram:
+				trigram[conc_tuple] = np.zeros(12)
+			trigram[conc_tuple][indices[sentence[i][1]]] += 1
+
+	for key in trigram:
+		arr = trigram[key]
+		arr/= np.sum(arr)
+		trigram[key] = arr
+	return trigram
+
+def word_feature(word, trigram, bigram, unigram, previous_word_tag = None, prev_2_word_tag = None):
+	vec = np.ones(12)
+	vec/=12
+	if previous_word_tag is None:
+		if word not in unigram:
+			return vec
+		else:
+			return unigram[word]
+	if prev_2_word_tag is None:
+		if (previous_word_tag, word) not in bigram:
+			if word not in unigram:
+				return vec
+			else: return unigram[word]
+		else: 
+			return bigram[(previous_word_tag, word)]
+
+	if (prev_2_word_tag, previous_word_tag, word) not in trigram:
+		if (previous_word_tag, word) not in bigram:
+			if word not in unigram:
+				return vec
+			else: return unigram[word]
+		else: 
+			return bigram[(previous_word_tag, word)]
+	return trigram[(prev_2_word_tag, previous_word_tag, word)]
+
+
+def trainFeatures(sentences):
+	trigram = trigram_generator(sentences)
+	bigram = bigram_generator(sentences)
+	unigram = unigram_generator(sentences)
+	features = []
+	for sentence in sentences:
+		for i in range(len(sentence)):
+			if i == 0:
+				features.append(word_feature(sentence[i][0], trigram, bigram, unigram))
+			if i == 1:
+				features.append(word_feature(sentence[i][0], trigram, bigram, unigram, previous_word_tag= sentence[i-1][1]))
+			if i > 1:
+				features.append(word_feature(sentence[i][0], trigram, bigram, unigram, previous_word_tag= sentence[i-1][1], prev_2_word_tag=sentence[i-2][1]))
+	features = np.asarray(features)
+	return features, trigram, bigram, unigram
+
+
+				
 
 
 
@@ -160,9 +251,8 @@ def genFeatures(words):
 	is_alpha_feature = [word.isalpha() for word in words]
 	is_alpha_feature = list(map(int,is_alpha_feature))
 	has_capital_feature = check_if_capital_letter(words)
-	NUM_FEATURES = 110
+	NUM_FEATURES = 10
 	NUM_WORDS = 5
-	model = Word2Vec.load("word2vec.model")
 	## For word 1
 	def extract_features(index):
 		feat = []
@@ -177,7 +267,6 @@ def genFeatures(words):
 		feat.append(is_alpha_feature[index])
 		feat.append(has_capital_feature[index])
 		feat = np.asarray(feat)
-		feat = np.concatenate((feat, model.wv[words[index]]))
 		return feat
 	features = np.zeros((len(words),NUM_FEATURES*NUM_WORDS))
 	features[:,0] = 1
@@ -193,10 +282,12 @@ def genFeatures(words):
 	#Once Done with Feature Set 1, move on to Feature Set 2
 
 if __name__ == "__main__":
-	words_tags = nltk.corpus.brown.tagged_words(tagset='universal')
-	words = [word_tag[0] for word_tag in words_tags]
-	tags_for_words = [word_tag[1] for word_tag in words_tags]
-	word2vectrain([words])
-	# unique_words = np.unique(words)
-	# sub_words = generate_sub_words(unique_words)
-	# print(sub_words)
+	words_tags = nltk.corpus.brown.tagged_sents(tagset = "universal")
+	
+	tags = []
+	for sentence in words_tags:
+		for wt in sentence:
+			if(wt[1] not in tags):
+				tags.append(wt[1])
+	print(tags)
+			
