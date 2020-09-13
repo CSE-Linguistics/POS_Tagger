@@ -67,9 +67,6 @@ class MultiClassSVM:
     def predict(self, X:np.array):
         raw_score = X@self.W
         max_col = np.argmax(raw_score, axis = 1)
-        final_score = np.zeros((raw_score.shape[0],W.shape[1]))
-
-
         return max_col
 
     def evaluate (self, X: np.array, Y: np.array):
@@ -88,7 +85,7 @@ class MultiClassSVM:
 
         return max_col, accuracy, loss, loss_array
     
-    def fit(self, X: np.array, Y: np.array, X_test:np.array, Y_test:np.array, lr :float = 0.001, epochs: int = 1000, batch_size: int  = 1024):
+    def fit(self, X: np.array, Y: np.array, lr :float = 0.001, epochs: int = 1000, batch_size: int  = 1024, verbose : bool = True):
         num_data = X.shape[0]
         num_classes = self.W.shape[1]
         train_losses = []
@@ -99,10 +96,12 @@ class MultiClassSVM:
         for i in range(epochs):
             train_loss = 0
             count = 0
+            Y_pred_train, acc_train, train_loss,la = self.evaluate(X, Y)
+            train_losses.append(train_loss)
             for j in range(0,num_data, batch_size):
                 count+= 1
-                X_train_svm = X[j:min(j+32,num_data)]
-                Y_train_svm = Y[j:min(j+32, num_data)]
+                X_train_svm = X[j:min(j+batch_size,num_data)]
+                Y_train_svm = Y[j:min(j+batch_size, num_data)]
                 num_samples = X_train_svm.shape[0]
                 
                 #-------------LR Step------------------------------
@@ -112,11 +111,12 @@ class MultiClassSVM:
 
                 #------------Print Loss-----------------------------
 
-            Y_pred_test, acc_test, test_loss,la = self.evaluate(X_test, Y_test)
-            test_losses.append(test_loss)
-            train_losses.append(train_loss/count)
-            print(f"Epoch {i}: Train loss = {train_loss} , Test loss = {test_loss}, Test accuracy = {acc_test}")
-        return train_losses, test_losses, self.W
+            if verbose == True:
+                print(f"Epoch {i}: Train loss = {train_loss} , Train accuracy = {acc_train}")
+        Y_pred_train, acc_train, train_loss,la = self.evaluate(X, Y)
+        train_losses.append(train_loss)
+        print(f"Epoch {epochs}: Train loss = {train_loss} , Train accuracy = {acc_train}")
+        return train_losses, self.W
 
     def svm_vec(self, X, y):
         loss = 0.0
@@ -146,6 +146,11 @@ class MultiClassSVM:
         dW += 2*self.reg*self.W
 
         return loss, dW
+    
+    def predict_single(self, x):
+        x = x[np.newaxis]
+        return self.predict(x)
+
 
 
     
