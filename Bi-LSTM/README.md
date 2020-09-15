@@ -1,6 +1,6 @@
 # POS tagging using Bi-LSTM
 
-We use NLTK's brown corpus to train and validate our model. The tagset used is Universal tagset consisting of 12 different tags. To implement the model we use Tensorflow 2.0.
+We used NLTK's brown corpus to train and validate our model. The tagset used was Universal tagset consisting of 12 different tags. To implement the model we used Tensorflow 2.0.
 
 ### Steps for pre-processing:
 * Add sentence beginner to annotated data
