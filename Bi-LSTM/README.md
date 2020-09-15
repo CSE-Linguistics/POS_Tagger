@@ -1,4 +1,6 @@
-# Pos tagging using Bi-LSTM
+# POS tagging using Bi-LSTM
+
+We use NLTK's brown corpus to train and validate our model. The tagset used is Universal tagset consisting of 12 different tags. To implement the model we use Tensorflow 2.0.
 
 ### Steps for pre-processing:
 * Add sentence beginner to annotated data
@@ -22,3 +24,8 @@
 * One should take care to ignore the accuracy for predicting the dummy tag - "PAD" while training the model
 * We should also not consider the tag - "PAD" while evaluating the model's performance on test data
 * This model is end-to-end and requires no pre-trained word vectors or feature engineering
+
+### Results
+* The accuracy obtained on test data only after 2 epochs of training was 95.8%
+* We evaluated the per-POS accuracy and found that the tags having less occurrences are predicted poorly as compared to others
+* We also found that many wrong predictions were due to unseen words in the test data
