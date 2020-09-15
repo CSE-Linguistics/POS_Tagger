@@ -10,14 +10,13 @@
 
 ### Design of the model:
 * The layers of the model are as follows-
-<center>
+
 	|     Layers        |
 	|:-----------------:|
 	|  Embedding layer  |
 	|Bidirectional layer|
 	|    Dense layer    |
 	|Softmax activation |
-</center>
 
 ### Some important points:
 * One should take care to ignore the accuracy for predicting the dummy tag - "PAD" while training the model
