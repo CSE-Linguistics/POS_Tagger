@@ -6,11 +6,12 @@
 * Add a dummy tag - "PAD" for padding
 * Every unique word should have a unique label
 * Every unique POS tag should have a unique label
-* Every tag should be coded into one-hot vectors
+* Tags should be coded into one-hot vectors
 
 ### Design of the model:
 * The layers of the model are as follows-
 <center>
+	|     Layers        |
 	|:-----------------:|
 	|  Embedding layer  |
 	|Bidirectional layer|
