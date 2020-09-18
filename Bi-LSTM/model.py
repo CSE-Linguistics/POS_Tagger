@@ -14,7 +14,6 @@ MAX_LEN = len(max(sent_words, key=len))
 # 5-fold cross validation
 k = 5
 acc_per_fold = []
-loss_per_fold = []
 sent_words_folds, sent_tags_folds = kfold_data(sent_words, sent_tags)
 for i in range(k):
 	print("Fold number {}".format(i+1))
@@ -49,9 +48,6 @@ for i in range(k):
 
 	# Train the model
 	model.fit(train_sent_words_labelled, one_hot(train_sent_tags_labelled, len(tag2label)), batch_size=128, epochs=2)
-	scores = model.evaluate(test_sent_words_labelled, one_hot(test_sent_tags_labelled, len(tag2label)), verbose=0)
-	acc_per_fold.append(scores[1] * 100)
-	loss_per_fold.append(scores[0])
 
 	# Print confusion matrix
 	predictions = model.predict(test_sent_words_labelled)
@@ -61,4 +57,23 @@ for i in range(k):
 	for pt in predicted_tags:
 		for t in pt:
 			concatenated_predictions.append(t) 
-	print(confusion_matrix(concatenated_tests, concatenated_predictions))
+	conf_mat = confusion_matrix(concatenated_tests, concatenated_predictions)
+	acc = sum(np.diag(conf_mat))/sum(sum(conf_mat[:,:]))
+	acc_per_fold.append(acc)
+
+	## Code to analyse errors in detail:
+	# concatenated_words = label_to_tag(test_sent_words_labelled, {i: w for w, i in word2label.items()})
+	# word_original_tag = defaultdict(int)
+	# word_predicted_tag = defaultdict(int)
+	# word_otag_ptag = defaultdict(int)
+	# for iter in range(len(concatenated_predictions)):
+	# 	if concatenated_predictions[iter] != concatenated_tests[iter]:
+	# 		word_original_tag[(concatenated_words[iter], concatenated_tests[iter])] += 1
+	# 		word_predicted_tag[(concatenated_words[iter], concatenated_predictions[iter])] += 1
+	# 		word_otag_ptag[(concatenated_words[iter], concatenated_tests[iter], concatenated_predictions[iter])] += 1
+	# sort_word_otag = sorted(word_original_tag.items(), key=lambda x: x[1], reverse=True)
+	# sort_word_ptag = sorted(word_predicted_tag.items(), key=lambda x: x[1], reverse=True)
+	# sort_word_otag_ptag = sorted(word_otag_ptag.items(), key=lambda x: x[1], reverse=True)
+	# print(sort_word_otag)
+	# print(sort_word_ptag)
+	# print(sort_word_otag_ptag)
