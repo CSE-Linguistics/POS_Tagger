@@ -113,6 +113,19 @@ def label_to_tag(sequences, label2tag):
 			tags.append(label2tag[s])
 	return tags
 
+# Function to replace numeric strings with 1
+def process_numbers(sent_words):
+	sents = []
+	for sent in sent_words:
+		s = []
+		for w in sent:
+			if w.isnumeric():
+				s.append("1")
+			else:
+				s.append(w)
+		sents.append(s)
+	return sents
+
 def ignore_class_accuracy(to_ignore=0):
     def ignore_accuracy(y_true, y_pred):
         y_true_class = K.argmax(y_true, axis=-1)

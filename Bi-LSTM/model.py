@@ -9,7 +9,9 @@ from sklearn.metrics import confusion_matrix
 tagged_sentences = nltk.corpus.brown.tagged_sents(tagset='universal')
 tagged_sentences = add_sent_beginner(tagged_sentences)
 sent_words, sent_tags = separate_words_tags(tagged_sentences)
+sent_words = process_numbers(sent_words)
 MAX_LEN = len(max(sent_words, key=len))
+tagset = ['.', 'ADJ', 'ADP', 'ADV', 'CONJ', 'DET', 'NOUN', 'NUM', 'PRON', 'PRT', 'VERB', 'X', '^']
 
 # 5-fold cross validation
 k = 5
@@ -57,9 +59,18 @@ for i in range(k):
 	for pt in predicted_tags:
 		for t in pt:
 			concatenated_predictions.append(t) 
-	conf_mat = confusion_matrix(concatenated_tests, concatenated_predictions)
+	conf_mat = confusion_matrix(concatenated_tests, concatenated_predictions, labels=tagset)
 	acc = sum(np.diag(conf_mat))/sum(sum(conf_mat[:,:]))
 	acc_per_fold.append(acc)
+
+	# per POS accuracy and recall
+	per_pos_acc = {}
+	per_pos_rec = {}
+	for l in range(len(tagset)):
+		per_pos_acc[tagset[l]] = conf_mat[l,l]/sum(conf_mat[l, :])
+		per_pos_rec[tagset[l]] = conf_mat[l,l]/sum(conf_mat[:, l])
+	print(per_pos_acc)
+	print(per_pos_rec)
 
 	## Code to analyse errors in detail:
 	# concatenated_words = label_to_tag(test_sent_words_labelled, {i: w for w, i in word2label.items()})
