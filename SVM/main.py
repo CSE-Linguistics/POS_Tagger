@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
         # #Step 2, make the SVM model
         learning_rate = 1e-1
-        reg = 1e-3
+        reg = 1e-2
         svm_model = model.MultiClassSVM(len(tagset), 22, reg = reg)
         path = f"reg_{reg}"
         os.makedirs(path,exist_ok =True)
