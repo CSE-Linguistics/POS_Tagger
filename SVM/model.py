@@ -1,5 +1,5 @@
 import numpy as np
-import gensim
+
 class SupportVectorMachine:
     def __init__(self, num_features:int,reg:float):
         self.W = np.random.normal(0,1,(num_features,1))
