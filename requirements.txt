@@ -1,0 +1,6 @@
+tensorflow=2.3.0
+sklearn
+numpy
+keras=2.4.3
+nltk - brown corpus and universal tagset
+matplotlib
