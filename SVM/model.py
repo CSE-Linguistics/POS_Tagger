@@ -111,7 +111,10 @@ class MultiClassSVM:
                 #------------Print Loss-----------------------------
 
             if verbose == True:
-                print(f"Epoch {i}: Train loss = {train_loss} , Train accuracy = {acc_train}")         
+                print(f"Epoch {i}: Train loss = {train_loss} , Train accuracy = {acc_train}")
+            if i >2:
+                if train_losses[-1] - train_losses[-2] > 1:
+                    break         
         Y_pred_train, acc_train, train_loss,la = self.evaluate(X, Y)
         train_losses.append(train_loss)
         print(f"Epoch {epochs}: Train loss = {train_loss} , Train accuracy = {acc_train}")
