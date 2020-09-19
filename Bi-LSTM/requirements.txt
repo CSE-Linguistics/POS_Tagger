@@ -1,5 +1,0 @@
-tensorflow
-sklearn
-numpy
-keras
-nltk - brown corpus and universal tagset
