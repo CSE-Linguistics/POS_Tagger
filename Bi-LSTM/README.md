@@ -2,6 +2,8 @@
 
 We used NLTK's brown corpus to train and validate our model. The tagset used was Universal tagset consisting of 12 different tags. To implement the model we used Tensorflow 2.0.
 
+### To Run
+Run the file from the IPython Notebook
 ### Steps for pre-processing:
 * Add sentence beginner to annotated data
 * Add two words to the vocabulary - "OOV" (out of vocab.), "PAD" (word to pad the sentence)
